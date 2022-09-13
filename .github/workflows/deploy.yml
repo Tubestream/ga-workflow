@@ -1,0 +1,61 @@
+name: Deploy service
+
+on:
+  workflow_call:
+    inputs:
+      repo:
+        required: true
+        type: string
+      branch:
+        required: true
+        type: string
+      server:
+        required: true
+        type: string
+      bu:
+        required: true
+        type: string
+    secrets:
+      DISCORD_WEBHOOK:
+        required: false
+
+jobs:
+  deploy-service:
+    name: Deploy service to server
+    runs-on: self-hosted
+    steps:
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies Including Ansible
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f ansible/requirements.txt ]; then pip install -r ansible/requirements.txt; fi
+
+      - name: Deploy service using Ansible
+        run: ansible-playbook ansible/playbook/deploy.yml -i ansible/ansible_hosts --extra-vars "mcsv='${{ inputs.repo }}' branch='${{ inputs.branch }}' server='${{ inputs.server }}' bu='${{ inputs.bu }}'"
+
+
+  comments-jira:
+    needs: deploy-service
+    with:
+      comments: "New update has been deployed to https://${{ inputs.bu }}${{ inputs.server }}.tubestream.com . See: ${{github.event.head_commit.url}} "
+    uses: Tubestream/ga-workflow/.github/workflows/comments_jira.yml@dev
+    secrets: inherit
+
+  notif-discord:
+    name: Notif discord
+    runs-on: self-hosted
+    needs: deploy-service
+    steps:
+    - name: Send discord notification
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        DISCORD_EMBEDS: '[{"title": "New ${{ github.event.repository.full_name }} update has been deployed.","description":"New update has been deployed to [${{ inputs.bu }}${{ inputs.server }}](https://${{ inputs.bu }}${{ inputs.server }}.tubestream.com)\nChange:  ${{github.event.head_commit.message}} .See: [Full changelog](${{github.event.head_commit.url}}) ","color": 5763719,"author":{"name":"${{github.event.pusher.name}}"}}]'
+      uses: Ilshidur/action-discord@master
+
+
+
+

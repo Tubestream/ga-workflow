@@ -1,0 +1,43 @@
+name: Jira Comment
+
+on:
+  workflow_call:
+    inputs:
+      comments:
+        required: true
+        type: string
+    secrets:
+      JIRA_BASE_URL:
+        required: false
+      JIRA_USER_EMAIL:
+        required: false
+      JIRA_API_TOKEN:
+        required: false
+
+jobs:
+  update-jira:
+    env:
+      HAVE_JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL != '' }}
+    runs-on: self-hosted
+    steps:
+      - name: Login
+        if: env.HAVE_JIRA_BASE_URL == 'true'
+        uses: atlassian/gajira-login@master
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      - name: Find Issue Key
+        if: env.HAVE_JIRA_BASE_URL == 'true'
+        id: find_issue
+        uses: thiar/gajira-find-issue-key@master-1.0
+        with:
+          from: commits
+
+      - name: Comment to issue
+        if: env.HAVE_JIRA_BASE_URL == 'true'
+        uses: thiar/gajira-comment@master
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+          comment: ${{ inputs.comments }}

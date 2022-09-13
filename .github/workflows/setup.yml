@@ -1,0 +1,46 @@
+
+name: Setup Project
+
+on:
+  workflow_call:
+    secrets:
+      SSH_KEY:
+        required: true
+  
+jobs:
+  setup:
+    name: Setup Project
+    runs-on: self-hosted
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.SSH_KEY }}
+          submodules: true
+          ref: ${{github.event.after}}
+          
+      - name: copy env
+        uses: canastro/copy-file-action@master
+        with:
+         source: ".env.example"
+         target: ".env"
+
+      - name: copy env.custom_bu
+        uses: canastro/copy-file-action@master
+        with:
+         source: ".env.example"
+         target: ".env.custom_bu"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        env:
+          runner: self-hosted
+        with:
+          php-version: "7.4"
+          coverage: none
+          tools: composer
+          extensions: mongodb,mbstring,gd
+
+      - name: Install PHP dependencies
+        run:  composer install --dev --no-progress --no-ansi --no-interaction
+          

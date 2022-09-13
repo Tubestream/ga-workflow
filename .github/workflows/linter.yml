@@ -1,0 +1,23 @@
+name: Code Linter
+
+on:
+  workflow_call:
+  
+
+jobs:
+  syntax-check:
+    name: Syntax Check
+    runs-on: self-hosted
+    steps:
+      - name: Use local linter
+        run: echo "${PWD}/vendor/bin" >> $GITHUB_PATH
+        
+      - name: Run linters php codesniff
+        uses: thiar/lint-action@master
+        with:
+          php_codesniffer: true
+          # Optional: Ignore warnings
+          php_codesniffer_args: "-n"
+          php_stan: true
+          continue_on_error: false,
+          neutral_check_on_warning: true

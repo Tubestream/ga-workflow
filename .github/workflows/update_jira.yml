@@ -1,0 +1,52 @@
+name: Jira Updater
+
+on:
+  workflow_call:
+    secrets:
+      JIRA_BASE_URL:
+        required: true
+      JIRA_USER_EMAIL:
+        required: true
+      JIRA_API_TOKEN:
+        required: true
+
+
+jobs:
+  update-jira:
+    runs-on: self-hosted
+    steps:
+
+      - name: Get PR Commits
+        id: 'get-pr-commits'
+        uses: tim-actions/get-pr-commits@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login
+        uses: atlassian/gajira-login@master
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+
+      - name: Find Issue Key
+        id: find_issue
+        uses: thiar/gajira-find-issue-key@master-1.0
+        env:
+          COMMIT_MESSAGE: ${{ steps.get-pr-commits.outputs.commits }}
+        with:
+          from:  custom_commit
+
+      - name: Transition from todo to in progress - When PR created
+        if: ${{ steps.find_issue.outputs.issue != '' && (github.event.action == 'opened') }}
+        uses: thiar/gajira-transition@master
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+          transition: "Start Development"
+
+      - name: Comment to issue - Add PR link
+        if: ${{ steps.find_issue.outputs.issue != '' && (github.event.action == 'opened' || github.event.action == 'reopened') }}
+        uses: thiar/gajira-comment@master
+        with:
+          issue: ${{ steps.find_issue.outputs.issue }}
+          comment: "New update from ${{ github.event.pull_request.head.user.login }} . See: ${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.number }}"
