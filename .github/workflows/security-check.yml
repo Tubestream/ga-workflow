@@ -1,0 +1,20 @@
+name: Code Linter
+
+on:
+  workflow_call:
+  
+
+jobs:
+  syntax-check:
+    name: Dependency security Check
+    runs-on: self-hosted
+    steps:
+      - name: Use local linter
+        run: echo "${PWD}/vendor/bin" >> $GITHUB_PATH
+        
+      - name: Run linters php codesniff
+        uses: thiar/lint-action@master
+        with:
+          continue_on_error: false,
+          neutral_check_on_warning: true,
+          php_security_checker: true
