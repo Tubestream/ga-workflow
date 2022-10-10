@@ -20,5 +20,4 @@ jobs:
           php_codesniffer_args: "-n"
           php_stan: true
           continue_on_error: false,
-          neutral_check_on_warning: true,
-          php_security_checker: true
+          neutral_check_on_warning: true
