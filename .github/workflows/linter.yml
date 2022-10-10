@@ -13,7 +13,7 @@ jobs:
         run: echo "${PWD}/vendor/bin" >> $GITHUB_PATH
         
       - name: Run linters php codesniff
-        uses: thiar/lint-action@master-php-security
+        uses: thiar/lint-action@master
         with:
           php_codesniffer: true
           # Optional: Ignore warnings
