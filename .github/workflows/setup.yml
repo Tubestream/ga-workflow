@@ -36,7 +36,7 @@ jobs:
         env:
           runner: self-hosted
         with:
-          php-version: "7.4"
+          php-version: "8.1"
           coverage: none
           tools: composer
           extensions: mongodb,mbstring,gd
