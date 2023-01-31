@@ -9,6 +9,16 @@ jobs:
     name: Syntax Check
     runs-on: self-hosted
     steps:
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        env:
+          runner: self-hosted
+        with:
+          php-version: "8.1"
+          coverage: none
+          tools: composer
+          extensions: mongodb,mbstring,gd
+          
       - name: Use local linter
         run: echo "${PWD}/vendor/bin" >> $GITHUB_PATH
         
